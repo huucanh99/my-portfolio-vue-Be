@@ -1,30 +1,24 @@
-import express from "express";
-import bodyParser from "body-parser";
-import viewEngine from "./config/viewEngine";
-import initwebRoutes from './route/web';
-import connectDB from './config/connectDB';
-import cors from 'cors';
-require('dotenv').config();
+import 'dotenv/config'
+import express from 'express'
+import cors from 'cors'
+import helmet from 'helmet'
+import morgan from 'morgan'
+import cookieParser from 'cookie-parser'
+import { connectDB } from './config/db.js'
+import api from './route/index.js'
 
-let app = express();
+const app = express()
 
-//config app
-app.use(cors({
-    origin: 'http://localhost:3000',
-    credentials: true,
-}));
+app.use(cors({ origin: process.env.CORS_ORIGIN || '*', credentials: true }))
+app.use(helmet())
+app.use(morgan('dev'))
+app.use(express.json())
+app.use(cookieParser())
 
-// app.use(bodyParser.json());
-// app.use(bodyParser.urlencoded({ extended: true }))
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }))
+app.use('/api', api)
+app.get('/', (_req, res) => res.send('OK'))
 
-viewEngine(app);
-initwebRoutes(app);
-connectDB();
-let port = process.env.PORT || 6969;
-//port === undefined => port = 6969
-app.listen(port, () => {
-    //callback 
-    console.log("Backend Nodejs is running on the port : " + port)
-})
+const PORT = process.env.PORT || 8080
+
+await connectDB(process.env.MONGO_URI)  // đảm bảo connectDB là async/await
+app.listen(PORT, () => console.log(`🚀 Server listening on http://localhost:${PORT}`))
